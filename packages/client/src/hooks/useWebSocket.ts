@@ -1,0 +1,52 @@
+// packages/client/src/hooks/useWebSocket.ts
+import { useEffect, useRef, useState, useCallback } from 'react';
+import type { ClientMessage, ServerMessage } from '@race-planner/shared';
+import { useRaceStore } from '../store/useRaceStore';
+import { useLiveStore } from '../store/useLiveStore';
+
+export function useWebSocket(url: string) {
+  const wsRef = useRef<WebSocket | null>(null);
+  const [connected, setConnected] = useState(false);
+
+  useEffect(() => {
+    function connect() {
+      const ws = new WebSocket(url);
+      wsRef.current = ws;
+      ws.onopen = () => setConnected(true);
+      ws.onclose = () => {
+        setConnected(false);
+        setTimeout(connect, 3000);
+      };
+      ws.onmessage = (e) => {
+        const msg: ServerMessage = JSON.parse(e.data);
+        switch (msg.type) {
+          case 'plan-loaded': {
+            const { config, drivers, stints, pitStops } = msg.plan;
+            const store = useRaceStore.getState();
+            store.setConfig(config);
+            store.setStints(stints);
+            store.setPitStops(pitStops);
+            drivers.forEach((d) => store.addDriver(d));
+            break;
+          }
+          case 'iracing-data':
+            useLiveStore.getState().setLiveData(msg.data);
+            break;
+          case 'iracing-status':
+            useLiveStore.getState().setConnected(msg.connected);
+            break;
+        }
+      };
+    }
+    connect();
+    return () => { wsRef.current?.close(); };
+  }, [url]);
+
+  const send = useCallback((msg: ClientMessage) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(msg));
+    }
+  }, []);
+
+  return { send, connected };
+}
