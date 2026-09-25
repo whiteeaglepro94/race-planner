@@ -1,0 +1,24 @@
+{
+  "id": "template-24h-lemans",
+  "config": {
+    "id": "template-24h-lemans-config",
+    "name": "24 Heures du Mans",
+    "simulator": "Le Mans Ultimate",
+    "circuit": "Circuit de la Sarthe",
+    "car": "Toyota TR010 Hybrid",
+    "durationMinutes": 1440,
+    "startTime": "16:00",
+    "sunsetTime": "20:05",
+    "sunriseTime": "07:41",
+    "mode": "duration",
+    "pitStopDurationSeconds": 60,
+    "fuelCapacity": 110,
+    "fuelPerLap": 4.16,
+    "avgLapTimeSeconds": 218.6
+  },
+  "drivers": [],
+  "stints": [],
+  "pitStops": [],
+  "createdAt": "2026-09-25T00:00:00.000Z",
+  "updatedAt": "2026-09-25T00:00:00.000Z"
+}

@@ -1,5 +1,9 @@
 import type { WebSocket, WebSocketServer } from 'ws';
 import type { ClientMessage, ServerMessage } from '@race-planner/shared';
+import { savePlan, loadPlan, listPlans, deletePlan } from './storage/plans.js';
+import { resolve } from 'node:path';
+
+const DATA_DIR = resolve(process.cwd(), 'data', 'plans');
 
 export function handleMessage(
   ws: WebSocket,
@@ -8,19 +12,25 @@ export function handleMessage(
 ): void {
   switch (message.type) {
     case 'list-plans':
-      send(ws, { type: 'plan-list', plans: [] });
+      listPlans(DATA_DIR).then((plans) => send(ws, { type: 'plan-list', plans }));
       break;
 
     case 'save-plan':
-      send(ws, { type: 'plan-saved', id: message.plan.id });
+      savePlan(message.plan, DATA_DIR).then(() =>
+        send(ws, { type: 'plan-saved', id: message.plan.id })
+      );
       break;
 
     case 'load-plan':
-      send(ws, { type: 'error', message: `Plan ${message.id} not found` });
+      loadPlan(message.id, DATA_DIR)
+        .then((plan) => send(ws, { type: 'plan-loaded', plan }))
+        .catch(() => send(ws, { type: 'error', message: `Plan ${message.id} not found` }));
       break;
 
     case 'delete-plan':
-      send(ws, { type: 'error', message: 'Not implemented' });
+      deletePlan(message.id, DATA_DIR).then(() =>
+        send(ws, { type: 'plan-list', plans: [] })
+      );
       break;
 
     case 'export':
