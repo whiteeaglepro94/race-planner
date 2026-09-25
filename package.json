@@ -2,7 +2,9 @@
   "name": "race-planner",
   "private": true,
   "packageManager": "npm@11.19.0",
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
@@ -12,5 +14,8 @@
   "devDependencies": {
     "turbo": "^2.4.0",
     "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "node-irsdk": "^2.1.6"
   }
 }

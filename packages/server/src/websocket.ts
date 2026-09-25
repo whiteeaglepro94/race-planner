@@ -1,10 +1,12 @@
 import type { WebSocket, WebSocketServer } from 'ws';
-import type { ClientMessage, ServerMessage } from '@race-planner/shared';
+import type { ClientMessage, ServerMessage, LiveRaceData } from '@race-planner/shared';
 import { savePlan, loadPlan, listPlans, deletePlan } from './storage/plans.js';
 import { resolve } from 'node:path';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { IracingSession } from './iracing/session.js';
 
 const DATA_DIR = resolve(process.cwd(), 'data', 'plans');
+let iracingSession: IracingSession | null = null;
 
 export async function handleMessage(
   ws: WebSocket,
@@ -53,13 +55,20 @@ export async function handleMessage(
       break;
     }
 
-    case 'iracing-connect':
-      send(ws, { type: 'iracing-status', connected: false });
+    case 'iracing-connect': {
+      if (!iracingSession) iracingSession = new IracingSession();
+      iracingSession.connect(
+        (data) => broadcast(wss, { type: 'iracing-data', data: data as LiveRaceData }),
+        (connected) => broadcast(wss, { type: 'iracing-status', connected }),
+      );
       break;
+    }
 
-    case 'iracing-disconnect':
-      send(ws, { type: 'iracing-status', connected: false });
+    case 'iracing-disconnect': {
+      iracingSession?.disconnect();
+      broadcast(wss, { type: 'iracing-status', connected: false });
       break;
+    }
 
     default:
       send(ws, { type: 'error', message: 'Unknown message type' });
