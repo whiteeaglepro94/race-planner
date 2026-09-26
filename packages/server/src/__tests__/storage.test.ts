@@ -11,7 +11,7 @@ describe('File storage', () => {
   const makePlan = (id: string): RacePlan => ({
     id,
     config: {
-      id: 'cfg-1', name: 'Test Race', simulator: 'Test', circuit: 'Test',
+      id: 'cfg-1', name: 'Test Race', teamName: '', simulator: 'Test', circuit: 'Test',
       car: 'Test', durationMinutes: 180, startTime: '14:00',
       sunsetTime: '20:00', sunriseTime: '06:00', mode: 'duration',
       pitStopDurationSeconds: 60, fuelCapacity: 100, fuelPerLap: 3,

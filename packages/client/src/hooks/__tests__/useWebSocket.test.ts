@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 // packages/client/src/hooks/__tests__/useWebSocket.test.ts
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';

@@ -9,16 +9,21 @@ export class IracingSession {
     this.bridge = new IracingBridge();
   }
 
-  async connect(onData: (data: unknown) => void, onStatus: (connected: boolean) => void): Promise<void> {
+  async connect(
+    onData: (data: unknown) => void,
+    onStatus: (connected: boolean, error?: string) => void,
+    onDrivers?: (drivers: unknown) => void,
+  ): Promise<void> {
     this.bridge.onData(onData as Parameters<IracingBridge['onData']>[0]);
-    const ok = await this.bridge.start();
-    this.connected = ok;
-    onStatus(ok);
+    if (onDrivers) this.bridge.onDrivers(onDrivers as Parameters<IracingBridge['onDrivers']>[0]);
+    const result = await this.bridge.start();
+    this.connected = result.ok;
+    onStatus(result.ok, result.error);
 
-    if (!ok) {
+    if (!result.ok) {
       this.reconnectTimer = setInterval(async () => {
         const retry = await this.bridge.start();
-        if (retry) {
+        if (retry.ok) {
           this.connected = true;
           onStatus(true);
           if (this.reconnectTimer) clearInterval(this.reconnectTimer);

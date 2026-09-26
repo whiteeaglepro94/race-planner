@@ -2,10 +2,11 @@ import { z } from 'zod';
 
 export const RaceConfigSchema = z.object({
   id: z.string().uuid(),
-  name: z.string().min(1),
-  simulator: z.string().min(1),
-  circuit: z.string().min(1),
-  car: z.string().min(1),
+  name: z.string(),
+  teamName: z.string(),
+  simulator: z.string(),
+  circuit: z.string(),
+  car: z.string(),
   durationMinutes: z.number().positive(),
   startTime: z.string().regex(/^\d{2}:\d{2}$/),
   sunsetTime: z.string().regex(/^\d{2}:\d{2}$/),
@@ -61,6 +62,7 @@ export const RacePlanSchema = z.object({
 
 export const LiveRaceDataSchema = z.object({
   sessionTime: z.number(),
+  sessionTimeOfDay: z.number(),
   currentLap: z.number(),
   totalLaps: z.number(),
   position: z.number(),
@@ -69,5 +71,7 @@ export const LiveRaceDataSchema = z.object({
   bestLapTime: z.number(),
   trackTemp: z.number(),
   isOnTrack: z.boolean(),
+  isOnPitRoad: z.boolean(),
   currentDriverIndex: z.number(),
+  sessionFlags: z.number(),
 });

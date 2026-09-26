@@ -3,7 +3,7 @@ import { useRaceStore } from '../store/useRaceStore';
 import type { ClientMessage } from '@race-planner/shared';
 
 export function useAutoSave(send: (msg: ClientMessage) => void) {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     const unsub = useRaceStore.subscribe(() => {

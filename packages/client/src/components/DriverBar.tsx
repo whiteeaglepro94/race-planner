@@ -12,15 +12,64 @@ export function DriverBar() {
     addDriver({ id: crypto.randomUUID(), name: `Pilote ${drivers.length + 1}`, color });
   };
 
+  const containerStyle: React.CSSProperties = {
+    display: 'flex',
+    gap: 8,
+    padding: '8px 16px',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    borderBottom: '1px solid #333',
+  };
+
+  const labelStyle: React.CSSProperties = {
+    color: '#888',
+    fontSize: 11,
+    textTransform: 'uppercase',
+    fontWeight: 600,
+    letterSpacing: 1,
+    marginRight: 4,
+  };
+
+  const addBtnStyle: React.CSSProperties = {
+    background: 'transparent',
+    color: '#888',
+    border: '1px dashed #555',
+    padding: '5px 14px',
+    cursor: 'pointer',
+    borderRadius: 4,
+    fontSize: 13,
+    fontWeight: 600,
+    transition: 'all 0.15s',
+  };
+
+  const helperStyle: React.CSSProperties = {
+    color: '#555',
+    fontSize: 11,
+    fontStyle: 'italic',
+    marginLeft: 8,
+  };
+
   return (
-    <div style={{ display: 'flex', gap: 8, padding: '8px 16px', alignItems: 'center', flexWrap: 'wrap' }}>
-      <span style={{ color: '#888', fontSize: 11, textTransform: 'uppercase' }}>Pilotes</span>
-      {drivers.map((d) => <DriverChip key={d.id} driver={d} />)}
-      <button onClick={handleAdd}
-        style={{ background: '#2a2a3e', color: '#e0e0e0', border: '1px dashed #555', padding: '4px 12px', cursor: 'pointer', borderRadius: 4 }}>
-        + Ajouter
+    <div style={containerStyle}>
+      <span style={labelStyle}>Pilotes</span>
+      {drivers.map((d) => (
+        <DriverChip key={d.id} driver={d} />
+      ))}
+      <button
+        onClick={handleAdd}
+        style={addBtnStyle}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.borderColor = '#888';
+          (e.currentTarget as HTMLButtonElement).style.color = '#ccc';
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.borderColor = '#555';
+          (e.currentTarget as HTMLButtonElement).style.color = '#888';
+        }}
+      >
+        +
       </button>
-      <span style={{ color: '#666', fontSize: 11, marginLeft: 8 }}>
+      <span style={helperStyle}>
         glisse un pilote sur un relais pour l'y affecter
       </span>
     </div>

@@ -26,3 +26,12 @@ Thumbs.db
 
 # Test
 coverage/
+
+# Superpowers
+.superpowers/
+
+# Build info
+*.tsbuildinfo
+
+# Data
+packages/server/data/

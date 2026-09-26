@@ -3,8 +3,8 @@ import { findStintAt, isOnRightEdge } from './hitTest';
 import { useRaceStore } from '../store/useRaceStore';
 import type { Stint } from '@race-planner/shared';
 
-const BLOCK_Y = 100;
-const BLOCK_H = 60;
+const BLOCK_Y = 110;
+const BLOCK_H = 90;
 
 interface DragState {
   active: boolean;
@@ -15,6 +15,18 @@ interface DragState {
 }
 
 let drag: DragState = { active: false, stintId: null, mode: 'scroll', startX: 0, startMinutes: 0 };
+
+function clampOffset(vp: Viewport): void {
+  const duration = useRaceStore.getState().raceConfig.durationMinutes;
+  const visibleMin = vp.canvasWidth / vp.scale;
+  const minOffset = -visibleMin * 0.1;
+  const maxOffset = duration - visibleMin * 0.9;
+  if (maxOffset > minOffset) {
+    vp.offsetX = Math.max(minOffset, Math.min(maxOffset, vp.offsetX));
+  } else {
+    vp.offsetX = minOffset;
+  }
+}
 
 export function handleMouseDown(e: MouseEvent, vp: Viewport): void {
   const store = useRaceStore.getState();
@@ -51,6 +63,7 @@ export function handleMouseMove(e: MouseEvent, vp: Viewport): void {
   if (drag.mode === 'scroll') {
     const delta = e.clientX - drag.startX;
     vp.offsetX = drag.startMinutes - delta / vp.scale;
+    clampOffset(vp);
     return;
   }
 
@@ -68,10 +81,16 @@ export function handleMouseUp(): void {
 
 export function handleWheel(e: WheelEvent, vp: Viewport): void {
   e.preventDefault();
-  const rect = (e.target as HTMLCanvasElement).getBoundingClientRect();
-  const px = e.clientX - rect.left;
-  const factor = e.deltaY > 0 ? 0.9 : 1.1;
-  vp.zoom(vp.scale * factor, px);
+  if (e.ctrlKey) {
+    const rect = (e.target as HTMLCanvasElement).getBoundingClientRect();
+    const px = e.clientX - rect.left;
+    const factor = e.deltaY > 0 ? 0.9 : 1.1;
+    vp.zoom(vp.scale * factor, px);
+  } else {
+    const scrollAmount = e.deltaY / vp.scale;
+    vp.offsetX += scrollAmount;
+  }
+  clampOffset(vp);
 }
 
 export function handleDblClick(e: MouseEvent, vp: Viewport): void {
@@ -108,5 +127,30 @@ export function handleDblClick(e: MouseEvent, vp: Viewport): void {
     };
     store.addStint(newStint);
     store.selectStint(newStint.id);
+  }
+}
+
+export function handleDragOver(e: DragEvent, vp: Viewport): void {
+  const driverId = e.dataTransfer?.types.includes('application/driver-id');
+  if (driverId) {
+    e.preventDefault();
+    e.dataTransfer!.dropEffect = 'copy';
+  }
+}
+
+export function handleDrop(e: DragEvent, vp: Viewport): void {
+  const driverId = e.dataTransfer?.getData('application/driver-id');
+  if (!driverId) return;
+  e.preventDefault();
+
+  const rect = (e.target as HTMLCanvasElement).getBoundingClientRect();
+  const px = e.clientX - rect.left;
+  const py = e.clientY - rect.top;
+  const store = useRaceStore.getState();
+
+  const hit = findStintAt(px, py, vp, store.stints, store.raceConfig.startTime, BLOCK_Y, BLOCK_H);
+  if (hit) {
+    store.updateStint(hit.id, { driverId });
+    store.selectStint(hit.id);
   }
 }

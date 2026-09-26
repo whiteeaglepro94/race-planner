@@ -1,12 +1,14 @@
 import type { WebSocket, WebSocketServer } from 'ws';
-import type { ClientMessage, ServerMessage, LiveRaceData } from '@race-planner/shared';
+import type { ClientMessage, ServerMessage, LiveRaceData, SessionDriver } from '@race-planner/shared';
 import { savePlan, loadPlan, listPlans, deletePlan } from './storage/plans.js';
 import { resolve } from 'node:path';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { IracingSession } from './iracing/session.js';
+import { DemoGenerator } from './demo/generator.js';
 
 const DATA_DIR = resolve(process.cwd(), 'data', 'plans');
 let iracingSession: IracingSession | null = null;
+let demoGenerator: DemoGenerator | null = null;
 
 export async function handleMessage(
   ws: WebSocket,
@@ -46,11 +48,13 @@ export async function handleMessage(
         send(ws, { type: 'export-ready', url: `/exports/${message.plan.id}.csv` });
       } else if (message.format === 'pdf') {
         const { planToPDF } = await import('./export/pdf.js');
-        const buf = await planToPDF(message.plan);
-        const filePath = resolve(process.cwd(), 'data', 'exports', `${message.plan.id}.pdf`);
-        await mkdir(resolve(process.cwd(), 'data', 'exports'), { recursive: true });
-        await writeFile(filePath, buf);
-        send(ws, { type: 'export-ready', url: `/exports/${message.plan.id}.pdf` });
+        const timelineImg = message.timelineImage ? {
+          data: Buffer.from(message.timelineImage, 'base64'),
+          width: message.timelineWidth ?? 0,
+          height: message.timelineHeight ?? 0,
+        } : undefined;
+        const buf = await planToPDF(message.plan, timelineImg);
+        send(ws, { type: 'export-pdf', data: buf.toString('base64') });
       }
       break;
     }
@@ -59,13 +63,33 @@ export async function handleMessage(
       if (!iracingSession) iracingSession = new IracingSession();
       iracingSession.connect(
         (data) => broadcast(wss, { type: 'iracing-data', data: data as LiveRaceData }),
-        (connected) => broadcast(wss, { type: 'iracing-status', connected }),
+        (connected, error?) => broadcast(wss, { type: 'iracing-status', connected, ...(error ? { error } : {}) }),
+        (drivers) => broadcast(wss, { type: 'iracing-drivers', drivers: drivers as SessionDriver[] }),
       );
       break;
     }
 
     case 'iracing-disconnect': {
       iracingSession?.disconnect();
+      broadcast(wss, { type: 'iracing-status', connected: false });
+      break;
+    }
+
+    case 'demo-start': {
+      iracingSession?.disconnect();
+      if (demoGenerator?.running) demoGenerator.stop();
+      demoGenerator = new DemoGenerator();
+      demoGenerator.start(
+        (data) => broadcast(wss, { type: 'iracing-data', data: data as LiveRaceData }),
+        (connected) => broadcast(wss, { type: 'iracing-status', connected }),
+        (drivers) => broadcast(wss, { type: 'iracing-drivers', drivers: drivers as SessionDriver[] }),
+      );
+      break;
+    }
+
+    case 'demo-stop': {
+      demoGenerator?.stop();
+      demoGenerator = null;
       broadcast(wss, { type: 'iracing-status', connected: false });
       break;
     }

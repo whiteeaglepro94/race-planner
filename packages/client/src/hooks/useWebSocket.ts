@@ -29,11 +29,28 @@ export function useWebSocket(url: string) {
             drivers.forEach((d) => store.addDriver(d));
             break;
           }
-          case 'iracing-data':
-            useLiveStore.getState().setLiveData(msg.data);
+          case 'iracing-data': {
+            const live = useLiveStore.getState();
+            live.setLiveData(msg.data);
+            const todSeconds = msg.data.sessionTimeOfDay;
+            if (todSeconds > 0) {
+              const todMinutes = todSeconds / 60;
+              const startTime = useRaceStore.getState().raceConfig.startTime;
+              const [sh, sm] = startTime.split(':').map(Number);
+              const startMinutes = sh * 60 + sm;
+              let elapsed = todMinutes - startMinutes;
+              if (elapsed < -720) elapsed += 1440;
+              if (elapsed < 0) elapsed = 0;
+              live.setElapsedMinutes(elapsed);
+            }
+            break;
+          }
+          case 'iracing-drivers':
+            useLiveStore.getState().setSessionDrivers(msg.drivers);
             break;
           case 'iracing-status':
             useLiveStore.getState().setConnected(msg.connected);
+            if (msg.error) useLiveStore.getState().setError(msg.error);
             break;
         }
       };

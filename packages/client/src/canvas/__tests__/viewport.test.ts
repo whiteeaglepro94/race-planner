@@ -5,7 +5,6 @@ import { Viewport } from '../viewport';
 describe('Viewport', () => {
   it('converts world to screen coords', () => {
     const vp = new Viewport(0, 3, 1200);
-    // minute 60 at scale 3 = pixel 180
     expect(vp.worldToScreenX(60)).toBe(180);
   });
 
@@ -16,14 +15,13 @@ describe('Viewport', () => {
 
   it('handles scroll offset', () => {
     const vp = new Viewport(30, 3, 1200);
-    // minute 60, offset 30 => (60-30)*3 = 90
     expect(vp.worldToScreenX(60)).toBe(90);
   });
 
   it('zooms centered on cursor', () => {
     const vp = new Viewport(0, 3, 1200);
     const worldBefore = vp.screenToWorldX(600);
-    vp.zoom(1.5, 600);
+    vp.zoom(4.5, 600);
     const worldAfter = vp.screenToWorldX(600);
     expect(Math.abs(worldBefore - worldAfter)).toBeLessThan(0.01);
     expect(vp.scale).toBe(4.5);
@@ -31,7 +29,7 @@ describe('Viewport', () => {
 
   it('clamps scale to min/max', () => {
     const vp = new Viewport(0, 0.5, 1200);
-    vp.zoom(0.1, 600);
+    vp.zoom(0.05, 600);
     expect(vp.scale).toBeGreaterThanOrEqual(0.1);
     const vp2 = new Viewport(0, 50, 1200);
     vp2.zoom(100, 600);

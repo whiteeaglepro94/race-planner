@@ -7,7 +7,7 @@ import { estimatePitStops } from '../automation/pitEstimate';
 import type { RaceConfig, Driver, Stint, RacePlan } from '../models';
 
 const config: RaceConfig = {
-  id: 'cfg-1', name: 'Test', simulator: 'Test', circuit: 'Test', car: 'Test',
+  id: 'cfg-1', name: 'Test', teamName: '', simulator: 'Test', circuit: 'Test', car: 'Test',
   durationMinutes: 360, startTime: '14:00', sunsetTime: '20:00', sunriseTime: '06:00',
   mode: 'duration', pitStopDurationSeconds: 60, fuelCapacity: 100,
   fuelPerLap: 3.5, avgLapTimeSeconds: 120,

@@ -6,6 +6,7 @@ describe('RaceConfigSchema', () => {
     const config = {
       id: crypto.randomUUID(),
       name: '24 Heures du Mans',
+      teamName: '',
       simulator: 'Le Mans Ultimate',
       circuit: 'Circuit de la Sarthe',
       car: 'Toyota TR010 Hybrid',
@@ -92,6 +93,7 @@ describe('RacePlanSchema', () => {
       config: {
         id: crypto.randomUUID(),
         name: 'Test Race',
+        teamName: '',
         simulator: 'Test',
         circuit: 'Test',
         car: 'Test',

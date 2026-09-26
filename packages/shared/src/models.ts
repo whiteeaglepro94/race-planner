@@ -3,6 +3,7 @@ export type AlertSeverity = 'error' | 'warning' | 'info';
 export interface RaceConfig {
   id: string;
   name: string;
+  teamName: string;
   simulator: string;
   circuit: string;
   car: string;
@@ -70,6 +71,7 @@ export interface PlanSummary {
 
 export interface LiveRaceData {
   sessionTime: number;
+  sessionTimeOfDay: number;
   currentLap: number;
   totalLaps: number;
   position: number;
@@ -78,7 +80,28 @@ export interface LiveRaceData {
   bestLapTime: number;
   trackTemp: number;
   isOnTrack: boolean;
+  isOnPitRoad: boolean;
   currentDriverIndex: number;
+  sessionFlags: number;
+}
+
+export interface SessionDriver {
+  carIdx: number;
+  name: string;
+  carNumber: string;
+  teamName: string;
+  carClass: string;
+  carClassColor: string;
+  carName: string;
+  iRating: number;
+  position: number;
+  classPosition: number;
+  lap: number;
+  lastLapTime: number;
+  bestLapTime: number;
+  gapToLeader: number;
+  isOnPitRoad: boolean;
+  isPlayer: boolean;
 }
 
 export interface StintDeviation {
@@ -109,15 +132,19 @@ export type ClientMessage =
   | { type: 'load-plan'; id: string }
   | { type: 'list-plans' }
   | { type: 'delete-plan'; id: string }
-  | { type: 'export'; format: 'pdf' | 'png' | 'csv'; plan: RacePlan }
+  | { type: 'export'; format: 'pdf' | 'png' | 'csv'; plan: RacePlan; timelineImage?: string; timelineWidth?: number; timelineHeight?: number }
   | { type: 'iracing-connect' }
-  | { type: 'iracing-disconnect' };
+  | { type: 'iracing-disconnect' }
+  | { type: 'demo-start' }
+  | { type: 'demo-stop' };
 
 export type ServerMessage =
   | { type: 'plan-saved'; id: string }
   | { type: 'plan-loaded'; plan: RacePlan }
   | { type: 'plan-list'; plans: PlanSummary[] }
   | { type: 'export-ready'; url: string }
-  | { type: 'iracing-status'; connected: boolean }
+  | { type: 'export-pdf'; data: string }
+  | { type: 'iracing-status'; connected: boolean; error?: string }
   | { type: 'iracing-data'; data: LiveRaceData }
+  | { type: 'iracing-drivers'; drivers: SessionDriver[] }
   | { type: 'error'; message: string };

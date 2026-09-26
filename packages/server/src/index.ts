@@ -1,6 +1,7 @@
 import { createServer as createHttpServer, type Server } from 'node:http';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { handleMessage } from './websocket.js';
+export { injectIracingSDK } from './iracing/bridge.js';
 
 let httpServer: Server | null = null;
 let wss: WebSocketServer | null = null;

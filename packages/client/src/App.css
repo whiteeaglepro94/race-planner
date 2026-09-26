@@ -3,10 +3,33 @@
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+  background: var(--bg-canvas);
+  transition: background 1.5s ease;
 }
 
 .app__timeline {
   flex: 1;
-  min-height: 200px;
+  min-height: 280px;
   position: relative;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.night-indicator {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #c06020;
+  padding: 2px 8px;
+  border: 1px solid #2a1a12;
+  border-radius: 12;
+  background: #120c09;
+}
+
+.night-mode .night-indicator {
+  display: flex;
 }

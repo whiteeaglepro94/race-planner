@@ -21,9 +21,9 @@ export class Viewport {
     return px / this.scale + this.offsetX;
   }
 
-  zoom(delta: number, centerPx: number): void {
+  zoom(newScale: number, centerPx: number): void {
     const worldCenter = this.screenToWorldX(centerPx);
-    this.scale = Math.max(Viewport.MIN_SCALE, Math.min(Viewport.MAX_SCALE, this.scale * delta));
+    this.scale = Math.max(Viewport.MIN_SCALE, Math.min(Viewport.MAX_SCALE, newScale));
     this.offsetX = worldCenter - centerPx / this.scale;
   }
 

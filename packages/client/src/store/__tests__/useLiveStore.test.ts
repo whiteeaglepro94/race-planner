@@ -22,10 +22,11 @@ describe('useLiveStore', () => {
 
   it('receives live data', () => {
     const data: LiveRaceData = {
-      sessionTime: 3600, currentLap: 42, totalLaps: 382,
+      sessionTime: 3600, sessionTimeOfDay: 57600, currentLap: 42, totalLaps: 382,
       position: 3, fuelRemaining: 45.2, lastLapTime: 218.4,
-      bestLapTime: 216.9, trackTemp: 28, isOnTrack: true,
+      bestLapTime: 216.9, trackTemp: 28, isOnTrack: true, isOnPitRoad: false,
       currentDriverIndex: 0,
+      sessionFlags: 0,
     };
     useLiveStore.getState().setLiveData(data);
     expect(useLiveStore.getState().data?.position).toBe(3);

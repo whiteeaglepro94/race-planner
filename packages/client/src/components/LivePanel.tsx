@@ -1,5 +1,6 @@
 import { useLiveStore } from '../store/useLiveStore';
 import { useRaceStore } from '../store/useRaceStore';
+import { useTheme } from '../hooks/useTheme';
 
 function formatLapTime(seconds: number): string {
   const min = Math.floor(seconds / 60);
@@ -14,6 +15,7 @@ export function LivePanel({ onConnect, onDisconnect }: { onConnect: () => void; 
   const drivers = useRaceStore((s) => s.drivers);
   const stints = useRaceStore((s) => s.stints);
   const currentStintIdx = useLiveStore((s) => s.currentStintIndex);
+  const t = useTheme();
 
   const currentStint = stints[currentStintIdx];
   const currentDriver = drivers.find((d) => d.id === currentStint?.driverId);
@@ -35,28 +37,28 @@ export function LivePanel({ onConnect, onDisconnect }: { onConnect: () => void; 
   };
 
   return (
-    <div style={{ background: '#0a0a18', padding: '8px 16px', borderTop: '1px solid #333', display: 'flex', gap: 24, alignItems: 'center', fontSize: 12 }}>
+    <div style={{ background: t.bgCanvas, padding: '8px 16px', borderTop: `1px solid ${t.border}`, display: 'flex', gap: 24, alignItems: 'center', fontSize: 12, transition: 'background 1.5s ease' }}>
       <button onClick={handleToggle}
-        style={{ background: active ? '#e74c3c' : '#27ae60', color: '#fff', border: 'none', padding: '6px 16px', cursor: 'pointer', borderRadius: 4, fontWeight: 'bold' }}>
+        style={{ background: active ? t.red : t.green, color: '#fff', border: 'none', padding: '6px 16px', cursor: 'pointer', borderRadius: 4, fontWeight: 'bold' }}>
         {active ? 'ARRÊTER SUIVI' : 'SUIVI EN COURSE'}
       </button>
 
-      {!active && <span style={{ color: '#666' }}>Cliquez pour démarrer le suivi en temps réel</span>}
+      {!active && <span style={{ color: t.textFaint }}>Cliquez pour démarrer le suivi en temps réel</span>}
 
       {active && (
         <>
-          <span style={{ color: connected ? '#27ae60' : '#e74c3c', fontWeight: 'bold' }}>
+          <span style={{ color: connected ? t.green : t.red, fontWeight: 'bold' }}>
             {connected ? '● CONNECTÉ' : '● DÉCONNECTÉ'}
           </span>
 
           {data && (
             <>
-              <span style={{ color: '#e0e0e0' }}>Position: <b>P{data.position}</b></span>
-              <span style={{ color: '#e0e0e0' }}>Tour: <b>{data.currentLap}/{data.totalLaps}</b></span>
-              <span style={{ color: '#e0e0e0' }}>Essence: <b>{data.fuelRemaining.toFixed(1)}L</b></span>
-              <span style={{ color: '#e0e0e0' }}>Dernier: <b>{formatLapTime(data.lastLapTime)}</b></span>
-              <span style={{ color: '#e0e0e0' }}>Meilleur: <b>{formatLapTime(data.bestLapTime)}</b></span>
-              <span style={{ color: '#e0e0e0' }}>Piste: <b>{data.trackTemp}°C</b></span>
+              <span style={{ color: t.textPrimary }}>Position: <b>P{data.position}</b></span>
+              <span style={{ color: t.textPrimary }}>Tour: <b>{data.currentLap}/{data.totalLaps}</b></span>
+              <span style={{ color: t.textPrimary }}>Essence: <b>{data.fuelRemaining.toFixed(1)}L</b></span>
+              <span style={{ color: t.textPrimary }}>Dernier: <b>{formatLapTime(data.lastLapTime)}</b></span>
+              <span style={{ color: t.textPrimary }}>Meilleur: <b>{formatLapTime(data.bestLapTime)}</b></span>
+              <span style={{ color: t.textPrimary }}>Piste: <b>{data.trackTemp.toFixed(0)}°C</b></span>
             </>
           )}
 
@@ -67,7 +69,7 @@ export function LivePanel({ onConnect, onDisconnect }: { onConnect: () => void; 
           )}
 
           {deltaText && (
-            <span style={{ color: lastDev!.deltaMinutes > 0 ? '#e74c3c' : '#27ae60', fontWeight: 'bold' }}>
+            <span style={{ color: lastDev!.deltaMinutes > 0 ? t.red : t.green, fontWeight: 'bold' }}>
               {deltaText}
             </span>
           )}

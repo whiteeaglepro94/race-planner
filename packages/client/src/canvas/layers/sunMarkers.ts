@@ -18,19 +18,25 @@ export function drawSunMarkers(
   const sunsetX = vp.worldToScreenX(sunsetMin - startMin);
   const sunriseX = vp.worldToScreenX(sunriseMin - startMin);
 
-  ctx.font = '14px sans-serif';
-  ctx.textAlign = 'center';
+  // Sunset marker
+  if (sunsetX > -50 && sunsetX < vp.canvasWidth + 50) {
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#f5a623';
+    ctx.font = '16px sans-serif';
+    ctx.fillText('🌙', sunsetX, y);
+    ctx.font = '10px "Segoe UI", system-ui, sans-serif';
+    ctx.fillStyle = '#f5a62390';
+    ctx.fillText(`coucher ${config.sunsetTime}`, sunsetX, y + 16);
+  }
 
-  // Sunset
-  ctx.fillStyle = '#f5a623';
-  ctx.fillText('☾', sunsetX, y);
-  ctx.font = '9px sans-serif';
-  ctx.fillText(`coucher ${config.sunsetTime}`, sunsetX, y + 14);
-
-  // Sunrise
-  ctx.font = '14px sans-serif';
-  ctx.fillStyle = '#f5d623';
-  ctx.fillText('☀', sunriseX, y);
-  ctx.font = '9px sans-serif';
-  ctx.fillText(`lever ${config.sunriseTime}`, sunriseX, y + 14);
+  // Sunrise marker
+  if (sunriseX > -50 && sunriseX < vp.canvasWidth + 50) {
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#f5d623';
+    ctx.font = '16px sans-serif';
+    ctx.fillText('☀️', sunriseX, y);
+    ctx.font = '10px "Segoe UI", system-ui, sans-serif';
+    ctx.fillStyle = '#f5d62390';
+    ctx.fillText(`lever ${config.sunriseTime}`, sunriseX, y + 16);
+  }
 }
