@@ -11,7 +11,12 @@ exports.default = async function afterPack(context) {
   const devRoot = path.resolve(__dirname, '..');
   const srcNM = path.join(devRoot, 'node_modules');
 
-  const modules = ['irsdk-node', '@irsdk-node', 'module-alias', 'node-gyp-build', 'bindings', 'node-addon-api'];
+  const modules = [
+    'irsdk-node', '@irsdk-node', 'module-alias', 'node-gyp-build', 'bindings', 'node-addon-api',
+    'pdfkit', '@noble/ciphers', '@noble/hashes', '@swc/helpers', 'base64-js', 'brotli',
+    'clone', 'dfa', 'fast-deep-equal', 'fflate', 'fontkit', 'linebreak', 'pako',
+    'png-js', 'restructure', 'tiny-inflate', 'tslib', 'unicode-properties', 'unicode-trie',
+  ];
   for (const mod of modules) {
     const src = path.join(srcNM, mod);
     const dst = path.join(targetNM, mod);

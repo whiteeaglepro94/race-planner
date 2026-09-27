@@ -6,6 +6,19 @@ import { drawSunMarkers } from '../canvas/layers/sunMarkers';
 import { drawStintBlocks } from '../canvas/layers/stintBlocks';
 import { drawPitStops } from '../canvas/layers/pitStops';
 import { drawPitTransitions } from '../canvas/layers/pitTransitions';
+import type { RaceConfig } from '@race-planner/shared';
+
+function addMinToTime(hhmm: string, delta: number): string {
+  const [h, m] = hhmm.split(':').map(Number);
+  const total = ((h * 60 + m + delta) % 1440 + 1440) % 1440;
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+
+function buildExtendedConfig(cfg: RaceConfig): RaceConfig {
+  const pre = (cfg.practiceDurationMinutes || 0) + (cfg.qualifyingDurationMinutes || 0);
+  if (pre <= 0) return cfg;
+  return { ...cfg, startTime: addMinToTime(cfg.startTime, -pre), durationMinutes: pre + cfg.durationMinutes };
+}
 
 const BLOCK_Y = 110;
 const BLOCK_H = 90;
@@ -17,7 +30,8 @@ const PX_PER_MIN = 5;
 
 function renderFullTimeline(): HTMLCanvasElement {
   const s = useRaceStore.getState();
-  const totalMin = s.raceConfig.durationMinutes;
+  const ext = buildExtendedConfig(s.raceConfig);
+  const totalMin = ext.durationMinutes;
   const w = Math.ceil(totalMin * PX_PER_MIN) + 40;
 
   const offscreen = document.createElement('canvas');
@@ -27,12 +41,12 @@ function renderFullTimeline(): HTMLCanvasElement {
 
   const vp = new Viewport(0, PX_PER_MIN, w);
 
-  drawBackground(ctx, vp, s.raceConfig, CANVAS_H);
-  drawTimeAxis(ctx, vp, s.raceConfig, TIME_AXIS_Y);
-  drawSunMarkers(ctx, vp, s.raceConfig, SUN_Y);
-  drawStintBlocks(ctx, vp, s.stints, s.drivers, s.selectedStintId, BLOCK_Y, BLOCK_H, s.raceConfig.startTime);
-  drawPitStops(ctx, vp, s.pitStops, PITSTOP_Y, s.raceConfig.startTime);
-  drawPitTransitions(ctx, vp, s.stints, s.drivers, PITSTOP_Y, s.raceConfig.startTime);
+  drawBackground(ctx, vp, ext, CANVAS_H);
+  drawTimeAxis(ctx, vp, ext, TIME_AXIS_Y);
+  drawSunMarkers(ctx, vp, ext, SUN_Y);
+  drawStintBlocks(ctx, vp, s.stints, s.drivers, s.selectedStintId, BLOCK_Y, BLOCK_H, ext.startTime);
+  drawPitStops(ctx, vp, s.pitStops, PITSTOP_Y, ext.startTime, null);
+  drawPitTransitions(ctx, vp, s.stints, s.drivers, PITSTOP_Y, ext.startTime);
 
   return offscreen;
 }
@@ -43,7 +57,8 @@ const PDF_ROW_H = 300;
 
 function renderTimelineForPdf(): HTMLCanvasElement {
   const s = useRaceStore.getState();
-  const totalMin = s.raceConfig.durationMinutes;
+  const ext = buildExtendedConfig(s.raceConfig);
+  const totalMin = ext.durationMinutes;
   const rows = Math.ceil(totalMin / PDF_ROW_MINUTES);
 
   const fullW = Math.ceil(totalMin * PX_PER_MIN) + PDF_MARGIN_PX * 2;
@@ -54,12 +69,12 @@ function renderTimelineForPdf(): HTMLCanvasElement {
 
   const vp = new Viewport(-PDF_MARGIN_PX / PX_PER_MIN, PX_PER_MIN, fullW);
 
-  drawBackground(fullCtx, vp, s.raceConfig, PDF_ROW_H);
-  drawTimeAxis(fullCtx, vp, s.raceConfig, TIME_AXIS_Y);
-  drawSunMarkers(fullCtx, vp, s.raceConfig, SUN_Y);
-  drawStintBlocks(fullCtx, vp, s.stints, s.drivers, s.selectedStintId, BLOCK_Y, BLOCK_H, s.raceConfig.startTime);
-  drawPitStops(fullCtx, vp, s.pitStops, PITSTOP_Y, s.raceConfig.startTime);
-  drawPitTransitions(fullCtx, vp, s.stints, s.drivers, PITSTOP_Y, s.raceConfig.startTime);
+  drawBackground(fullCtx, vp, ext, PDF_ROW_H);
+  drawTimeAxis(fullCtx, vp, ext, TIME_AXIS_Y);
+  drawSunMarkers(fullCtx, vp, ext, SUN_Y);
+  drawStintBlocks(fullCtx, vp, s.stints, s.drivers, s.selectedStintId, BLOCK_Y, BLOCK_H, ext.startTime);
+  drawPitStops(fullCtx, vp, s.pitStops, PITSTOP_Y, ext.startTime, null);
+  drawPitTransitions(fullCtx, vp, s.stints, s.drivers, PITSTOP_Y, ext.startTime);
 
   const rowW = Math.ceil(PDF_ROW_MINUTES * PX_PER_MIN) + PDF_MARGIN_PX * 2;
 

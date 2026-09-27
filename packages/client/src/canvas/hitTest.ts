@@ -23,3 +23,12 @@ export function isOnRightEdge(
   return px >= rect.x + rect.w - 6 && px <= rect.x + rect.w + 6
     && py >= rect.y && py <= rect.y + rect.h;
 }
+
+export function isOnLeftEdge(
+  px: number, py: number, vp: Viewport, stint: Stint,
+  raceStartTime: string, blockY: number, blockH: number
+): boolean {
+  const rect = getStintScreenRect(stint, vp, blockY, blockH, raceStartTime);
+  return px >= rect.x - 6 && px <= rect.x + 6
+    && py >= rect.y && py <= rect.y + rect.h;
+}

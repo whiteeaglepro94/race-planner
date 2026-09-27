@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useRaceStore } from '../store/useRaceStore';
 import { useTheme, type Theme } from '../hooks/useTheme';
 
@@ -159,6 +160,107 @@ function buildStyles(t: Theme): Record<string, React.CSSProperties> {
   };
 }
 
+function isValidTime(v: string): boolean {
+  return /^\d{1,2}:\d{2}$/.test(v);
+}
+
+function timeToMin(hhmm: string): number {
+  const [h, m] = hhmm.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function minToTime(m: number): string {
+  const total = ((m % 1440) + 1440) % 1440;
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+
+function StintTimeEditor({ stint, driver, update, styles, t }: {
+  stint: { id: string; startTime: string; endTime: string; durationMinutes: number; locked: boolean };
+  driver: { name: string; color: string } | undefined;
+  update: (partial: Record<string, unknown>) => void;
+  styles: Record<string, React.CSSProperties>;
+  t: Theme;
+}) {
+  const [startInput, setStartInput] = useState(stint.startTime);
+  const [endInput, setEndInput] = useState(stint.endTime);
+
+  useEffect(() => { setStartInput(stint.startTime); }, [stint.startTime]);
+  useEffect(() => { setEndInput(stint.endTime); }, [stint.endTime]);
+
+  const commitStart = () => {
+    if (!isValidTime(startInput)) { setStartInput(stint.startTime); return; }
+    const [h, m] = startInput.split(':').map(Number);
+    const v = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    const endMin = timeToMin(stint.endTime);
+    let dur = endMin - timeToMin(v);
+    if (dur <= 0) dur += 1440;
+    update({ startTime: v, durationMinutes: dur });
+    setStartInput(v);
+  };
+
+  const commitEnd = () => {
+    if (!isValidTime(endInput)) { setEndInput(stint.endTime); return; }
+    const [h, m] = endInput.split(':').map(Number);
+    const v = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    const startMin = timeToMin(stint.startTime);
+    let dur = timeToMin(v) - startMin;
+    if (dur <= 0) dur += 1440;
+    update({ endTime: v, durationMinutes: dur });
+    setEndInput(v);
+  };
+
+  const durH = Math.floor(stint.durationMinutes / 60);
+  const durM = stint.durationMinutes % 60;
+  const durStr = durH > 0 ? `${durH}h${String(durM).padStart(2, '0')}` : `${durM} min`;
+
+  const timeInput: React.CSSProperties = {
+    background: 'transparent',
+    border: `1px solid ${t.borderSubtle}`,
+    borderRadius: 4,
+    color: driver?.color ?? '#5ddfde',
+    fontSize: 15,
+    fontWeight: 700,
+    fontFamily: '"Segoe UI Mono", "Consolas", monospace',
+    width: 58,
+    textAlign: 'center',
+    outline: 'none',
+    padding: '1px 3px',
+  };
+
+  return (
+    <div style={{ ...styles.col, borderTop: `3px solid ${driver?.color ?? '#e74c3c'}` }}>
+      <div style={styles.headerRed}>Relais sélectionné</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: driver?.color ?? '#5ddfde' }}>{driver?.name}</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <input
+          type="text"
+          value={startInput}
+          onChange={(e) => setStartInput(e.target.value)}
+          onBlur={commitStart}
+          onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+          maxLength={5}
+          style={timeInput}
+        />
+        <span style={{ color: t.textMuted, fontSize: 14 }}>→</span>
+        <input
+          type="text"
+          value={endInput}
+          onChange={(e) => setEndInput(e.target.value)}
+          onBlur={commitEnd}
+          onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+          maxLength={5}
+          style={timeInput}
+        />
+      </div>
+      <div style={{ fontSize: 11, color: t.textMuted, marginTop: 4 }}>
+        Durée : {durStr} — relais {stint.locked ? 'verrouillé' : 'simple'}
+      </div>
+    </div>
+  );
+}
+
 export function StintDetailPanel() {
   const selectedId = useRaceStore((s) => s.selectedStintId);
   const stint = useRaceStore((s) => s.stints.find((st) => st.id === s.selectedStintId));
@@ -185,15 +287,7 @@ export function StintDetailPanel() {
   return (
     <div style={styles.container}>
       {/* Col 1: Relais sélectionné */}
-      <div style={{ ...styles.col, borderTop: `3px solid ${driver?.color ?? '#e74c3c'}` }}>
-        <div style={styles.headerRed}>Relais sélectionné</div>
-        <div style={{ ...styles.relaisTitle, color: driver?.color ?? '#5ddfde' }}>
-          {driver?.name} · {stint.startTime} → {stint.endTime}
-        </div>
-        <div style={styles.relaisSubtitle}>
-          relais {stint.locked ? 'verrouillé' : 'simple'}
-        </div>
-      </div>
+      <StintTimeEditor stint={stint} driver={driver} update={update} styles={styles} t={t} />
 
       {/* Col 2: Pilote */}
       <div style={{ ...styles.col, borderTop: `3px solid ${t.borderSubtle}` }}>

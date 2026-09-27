@@ -13,8 +13,14 @@ export function useKeyboardShortcuts() {
         useRaceStore.temporal.getState().redo();
       }
       if (e.key === 'Delete') {
-        const selected = useRaceStore.getState().selectedStintId;
-        if (selected) useRaceStore.getState().removeStint(selected);
+        const tag = (document.activeElement as HTMLElement)?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        const state = useRaceStore.getState();
+        if (state.selectedPitStopId) {
+          state.removePitStop(state.selectedPitStopId);
+        } else if (state.selectedStintId) {
+          state.removeStint(state.selectedStintId);
+        }
       }
     };
     window.addEventListener('keydown', handler);

@@ -45,6 +45,6 @@ export async function stopServer(): Promise<void> {
   }
 }
 
-if (process.argv[1]?.endsWith('index.js') || process.argv[1]?.endsWith('index.ts')) {
+if (process.argv[1]?.endsWith('index.js') || process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('bundle.cjs')) {
   createServer(3001);
 }

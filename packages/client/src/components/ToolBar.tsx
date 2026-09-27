@@ -3,57 +3,13 @@ import { useRaceStore } from '../store/useRaceStore';
 import { distributeStints, autofillGaps, validatePlan } from '@race-planner/shared';
 import { exportCSV, exportPNG, exportPDF, saveAsJSON } from '../utils/exportClient';
 import { useLiveStore } from '../store/useLiveStore';
+import { useCalendarStore } from '../store/useCalendarStore';
 import { DriverChip } from './DriverChip';
 import { useTheme } from '../hooks/useTheme';
+import { useNightModeStore } from '../hooks/useNightMode';
 
 const DEFAULT_COLORS = ['#2ecc71', '#3498db', '#f1c40f', '#9b59b6', '#e74c3c', '#1abc9c'];
 
-function IracingBadge({ onConnect, onDisconnect }: { onConnect: () => void; onDisconnect: () => void }) {
-  const active = useLiveStore((s) => s.active);
-  const connected = useLiveStore((s) => s.connected);
-  const error = useLiveStore((s) => s.error);
-  const startFollowing = useLiveStore((s) => s.startFollowing);
-  const stopFollowing = useLiveStore((s) => s.stopFollowing);
-
-  const handleClick = () => {
-    if (active) {
-      stopFollowing();
-      onDisconnect();
-    } else {
-      startFollowing();
-      onConnect();
-    }
-  };
-
-  const bg = active ? (connected ? '#0d3d1a' : '#3d1a0d') : 'var(--bg-elevated)';
-  const color = active ? (connected ? 'var(--green)' : 'var(--red)') : 'var(--text-muted)';
-  const border = active ? (connected ? '#238636' : '#da3633') : 'var(--border-subtle)';
-  const label = active
-    ? connected
-      ? '● Connecté à iRacing'
-      : error
-        ? `✕ ${error}`
-        : '● Connexion...'
-    : 'Suivi en course';
-
-  return (
-    <button onClick={handleClick} style={{
-      background: bg,
-      color,
-      border: `1px solid ${border}`,
-      borderRadius: 12,
-      padding: '2px 10px',
-      fontSize: 10,
-      fontWeight: 700,
-      textTransform: 'uppercase',
-      letterSpacing: 0.8,
-      whiteSpace: 'nowrap',
-      cursor: 'pointer',
-    }}>
-      {label}
-    </button>
-  );
-}
 
 function DemoBadge({ onStart, onStop }: { onStart: () => void; onStop: () => void }) {
   const demo = useLiveStore((s) => s.demo);
@@ -103,7 +59,46 @@ function DemoBadge({ onStart, onStop }: { onStart: () => void; onStop: () => voi
   );
 }
 
-export function ToolBar({ onSave, onExport, onIracingConnect, onIracingDisconnect, onDemoStart, onDemoStop }: { onSave: () => void; onExport: (format: 'pdf' | 'png' | 'csv') => void; onIracingConnect: () => void; onIracingDisconnect: () => void; onDemoStart: () => void; onDemoStop: () => void }) {
+function NightToggle() {
+  const override = useNightModeStore((s) => s.override);
+  const setOverride = useNightModeStore((s) => s.setOverride);
+
+  const cycle = () => {
+    if (override === 'auto') setOverride('on');
+    else if (override === 'on') setOverride('off');
+    else setOverride('auto');
+  };
+
+  const labels: Record<string, string> = { auto: 'Auto', on: 'Nuit', off: 'Jour' };
+  const icons: Record<string, string> = { auto: '◐', on: '🌙', off: '☀' };
+  const bg = override === 'on' ? '#1a1a3d' : override === 'off' ? '#2a2210' : 'var(--bg-elevated)';
+  const color = override === 'on' ? '#a78bfa' : override === 'off' ? '#f0c040' : 'var(--text-muted)';
+  const border = override === 'on' ? '#7c3aed' : override === 'off' ? '#b08820' : 'var(--border-subtle)';
+
+  return (
+    <button onClick={cycle} title="Mode nuit : Auto / Forcé / Désactivé" style={{
+      background: bg,
+      color,
+      border: `1px solid ${border}`,
+      borderRadius: 12,
+      padding: '2px 10px',
+      fontSize: 10,
+      fontWeight: 700,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+      whiteSpace: 'nowrap',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 4,
+    }}>
+      <span style={{ fontSize: 12 }}>{icons[override]}</span>
+      {labels[override]}
+    </button>
+  );
+}
+
+export function ToolBar({ onSave, onExport, onDemoStart, onDemoStop, onIracingImport }: { onSave: () => void; onExport: (format: 'pdf' | 'png' | 'csv') => void; onDemoStart: () => void; onDemoStop: () => void; onIracingImport: () => void }) {
   const store = useRaceStore.getState;
   const setStints = useRaceStore((s) => s.setStints);
   const setAlerts = useRaceStore((s) => s.setAlerts);
@@ -203,11 +198,26 @@ export function ToolBar({ onSave, onExport, onIracingConnect, onIracingDisconnec
         <span style={{ fontSize: 15, fontWeight: 700, color: t.textPrimary, display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}>
           Plan de course
         </span>
-        <IracingBadge onConnect={onIracingConnect} onDisconnect={onIracingDisconnect} />
+        <button
+          onClick={onIracingImport}
+          style={{
+            background: '#2a1a0a',
+            color: '#e67e22',
+            border: '1px solid #e67e22',
+            borderRadius: 12,
+            padding: '2px 10px',
+            fontSize: 10,
+            fontWeight: 700,
+            textTransform: 'uppercase' as const,
+            letterSpacing: 0.8,
+            whiteSpace: 'nowrap' as const,
+            cursor: 'pointer',
+          }}
+        >
+          Connexion iRacing
+        </button>
         <DemoBadge onStart={onDemoStart} onStop={onDemoStop} />
-
-        {/* Night indicator */}
-        <span className="night-indicator">nuit</span>
+        <NightToggle />
 
         {/* Separator */}
         <div style={{ width: 1, height: 22, background: t.border, margin: '0 4px' }} />

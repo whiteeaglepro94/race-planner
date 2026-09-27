@@ -1,6 +1,30 @@
-import { useRef, useEffect } from 'react';
-import { RaceTimelineRenderer } from './renderer';
+import { useRef, useEffect, useState } from 'react';
+import { RaceTimelineRenderer, TOTAL_CANVAS_H } from './renderer';
 import { handleMouseDown, handleMouseUp, handleMouseMove, handleWheel, handleDblClick, handleDragOver, handleDrop } from './interaction';
+
+function RealTimeClock() {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const ss = String(now.getSeconds()).padStart(2, '0');
+  return (
+    <div style={{
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      padding: '2px 8px',
+    }}>
+      <span style={{ fontSize: 10, fontWeight: 700, color: '#f5a62390', letterSpacing: 1.5, textTransform: 'uppercase' }}>
+        Heure réel
+      </span>
+      <span style={{ fontSize: 11, fontWeight: 700, fontFamily: '"Segoe UI Mono", "Consolas", monospace', color: '#f5a623' }}>
+        {hh}:{mm}:{ss}
+      </span>
+    </div>
+  );
+}
 
 export function TimelineCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -15,7 +39,7 @@ export function TimelineCanvas() {
 
     const resize = () => {
       const parent = canvas.parentElement!;
-      renderer.resize(parent.clientWidth, 300);
+      renderer.resize(parent.clientWidth, TOTAL_CANVAS_H);
     };
     resize();
     window.addEventListener('resize', resize);
@@ -51,6 +75,7 @@ export function TimelineCanvas() {
 
   return (
     <div style={{ width: '100%', overflow: 'hidden' }}>
+      <RealTimeClock />
       <canvas ref={canvasRef} style={{ display: 'block', cursor: 'default' }} />
     </div>
   );

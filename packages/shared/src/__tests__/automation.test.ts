@@ -11,6 +11,7 @@ const config: RaceConfig = {
   durationMinutes: 360, startTime: '14:00', sunsetTime: '20:00', sunriseTime: '06:00',
   mode: 'duration', pitStopDurationSeconds: 60, fuelCapacity: 100,
   fuelPerLap: 3.5, avgLapTimeSeconds: 120,
+  practiceDurationMinutes: 0, qualifyingDurationMinutes: 0, setupNotes: '',
 };
 
 const drivers: Driver[] = [

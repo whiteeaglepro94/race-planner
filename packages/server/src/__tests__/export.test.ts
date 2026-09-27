@@ -4,7 +4,7 @@ import type { RacePlan } from '@race-planner/shared';
 
 const plan: RacePlan = {
   id: 'p-1',
-  config: { id: 'c-1', name: 'Test', teamName: '', simulator: 'S', circuit: 'C', car: 'V', durationMinutes: 180, startTime: '14:00', sunsetTime: '20:00', sunriseTime: '06:00', mode: 'duration', pitStopDurationSeconds: 60, fuelCapacity: 100, fuelPerLap: 3, avgLapTimeSeconds: 120 },
+  config: { id: 'c-1', name: 'Test', teamName: '', simulator: 'S', circuit: 'C', car: 'V', durationMinutes: 180, startTime: '14:00', sunsetTime: '20:00', sunriseTime: '06:00', mode: 'duration', pitStopDurationSeconds: 60, fuelCapacity: 100, fuelPerLap: 3, avgLapTimeSeconds: 120, practiceDurationMinutes: 0, qualifyingDurationMinutes: 0, setupNotes: '' },
   drivers: [{ id: 'drv-1', name: 'Alice', color: '#f00' }],
   stints: [{ id: 'st-1', driverId: 'drv-1', startTime: '14:00', endTime: '15:30', durationMinutes: 90, locked: false, tireCompound: 'dry', tireCondition: 'new', fuelLoads: 1, notes: 'push', order: 0 }],
   pitStops: [],

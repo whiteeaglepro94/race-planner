@@ -2,6 +2,7 @@ export type {
   RaceConfig, Driver, Stint, PitStop, RacePlan, PlanSummary,
   LiveRaceData, LiveState, StintDeviation, PlanAlert, AlertSeverity,
   ClientMessage, ServerMessage, SessionDriver,
+  IracingSeriesInfo, IracingWeekInfo, IracingTimeSlot, RivalPitEvent,
 } from './models.js';
 
 export {

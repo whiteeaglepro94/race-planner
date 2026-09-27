@@ -5,10 +5,13 @@ import { resolve } from 'node:path';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { IracingSession } from './iracing/session.js';
 import { DemoGenerator } from './demo/generator.js';
+import { IracingApiClient } from './iracing/api-client.js';
+import { fetchCalendarData, weekToPartialConfig } from './iracing/calendar.js';
 
 const DATA_DIR = resolve(process.cwd(), 'data', 'plans');
 let iracingSession: IracingSession | null = null;
 let demoGenerator: DemoGenerator | null = null;
+let iracingApiClient: IracingApiClient | null = null;
 
 export async function handleMessage(
   ws: WebSocket,
@@ -91,6 +94,73 @@ export async function handleMessage(
       demoGenerator?.stop();
       demoGenerator = null;
       broadcast(wss, { type: 'iracing-status', connected: false });
+      break;
+    }
+
+    case 'iracing-api-login': {
+      if (!iracingApiClient) iracingApiClient = new IracingApiClient();
+      iracingApiClient.setCookies(message.cookies);
+      send(ws, { type: 'iracing-api-auth', success: true });
+      try {
+        const series = await fetchCalendarData(iracingApiClient);
+        send(ws, { type: 'iracing-api-seasons', series });
+      } catch (err: any) {
+        send(ws, { type: 'error', message: err?.message ?? 'Erreur lors du chargement du calendrier' });
+      }
+      break;
+    }
+
+    case 'iracing-api-logout': {
+      iracingApiClient?.logout();
+      iracingApiClient = null;
+      send(ws, { type: 'iracing-api-auth', success: false });
+      break;
+    }
+
+    case 'iracing-api-status': {
+      send(ws, {
+        type: 'iracing-api-auth',
+        success: iracingApiClient?.isAuthenticated ?? false,
+      });
+      break;
+    }
+
+    case 'iracing-api-seasons': {
+      if (!iracingApiClient?.isAuthenticated) {
+        send(ws, { type: 'error', message: 'Non authentifié — connectez-vous d\'abord' });
+        break;
+      }
+      try {
+        const series = await fetchCalendarData(iracingApiClient);
+        send(ws, { type: 'iracing-api-seasons', series });
+      } catch (err: any) {
+        send(ws, { type: 'error', message: err?.message ?? 'Erreur lors du chargement du calendrier' });
+      }
+      break;
+    }
+
+    case 'iracing-api-import': {
+      if (!iracingApiClient?.isAuthenticated) {
+        send(ws, { type: 'error', message: 'Non authentifié' });
+        break;
+      }
+      try {
+        const allSeries = await fetchCalendarData(iracingApiClient);
+        const targetSeries = allSeries.find((s) => s.seasonId === message.seasonId);
+        if (!targetSeries) {
+          send(ws, { type: 'error', message: 'Série introuvable' });
+          break;
+        }
+        const targetWeek = targetSeries.weeks.find((w) => w.weekNum === message.weekNum);
+        if (!targetWeek) {
+          send(ws, { type: 'error', message: 'Semaine introuvable' });
+          break;
+        }
+        const config = weekToPartialConfig(targetSeries, targetWeek);
+        send(ws, { type: 'iracing-api-import', config });
+      } catch (err: any) {
+        send(ws, { type: 'error', message: err?.message ?? 'Erreur lors de l\'import' });
+      }
       break;
     }
 

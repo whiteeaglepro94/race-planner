@@ -17,6 +17,8 @@ export const RaceConfigSchema = z.object({
   fuelCapacity: z.number().positive(),
   fuelPerLap: z.number().positive(),
   avgLapTimeSeconds: z.number().positive(),
+  practiceDurationMinutes: z.number().nonnegative().default(0),
+  qualifyingDurationMinutes: z.number().nonnegative().default(0),
 });
 
 export const DriverSchema = z.object({
@@ -43,7 +45,7 @@ export const StintSchema = z.object({
 
 export const PitStopSchema = z.object({
   id: z.string().uuid(),
-  afterStintId: z.string().uuid(),
+  afterStintId: z.string().uuid().optional(),
   time: z.string().regex(/^\d{2}:\d{2}$/),
   durationSeconds: z.number().nonnegative(),
   tireChange: z.boolean(),

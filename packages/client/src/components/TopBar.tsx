@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRaceStore } from '../store/useRaceStore';
 import { useTheme } from '../hooks/useTheme';
 
@@ -14,6 +14,13 @@ function formatDuration(minutes: number): string {
   return m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, '0')}`;
 }
 
+function isValidTime(s: string): boolean {
+  return /^\d{1,2}:\d{2}$/.test(s) && (() => {
+    const [h, m] = s.split(':').map(Number);
+    return h >= 0 && h <= 23 && m >= 0 && m <= 59;
+  })();
+}
+
 function addMinutesToTime(time: string, delta: number): string {
   const [hh, mm] = time.split(':').map(Number);
   let total = hh * 60 + mm + delta;
@@ -27,12 +34,19 @@ function addMinutesToTime(time: string, delta: number): string {
 export function TopBar() {
   const config = useRaceStore((s) => s.raceConfig);
   const setConfig = useRaceStore((s) => s.setConfig);
+  const realStartTime = useRaceStore((s) => s.realStartTime);
+  const setRealStartTime = useRaceStore((s) => s.setRealStartTime);
   const driverCount = useRaceStore((s) => s.drivers.length);
   const t = useTheme();
+  const localTz = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone, []);
   const isCustom = !PRESETS.some((p) => p.minutes === config.durationMinutes);
   const [showCustom, setShowCustom] = useState(isCustom);
   const [customH, setCustomH] = useState(String(Math.floor(config.durationMinutes / 60)));
   const [customM, setCustomM] = useState(String(config.durationMinutes % 60));
+  const [simTimeInput, setSimTimeInput] = useState(config.startTime);
+  const [realTimeInput, setRealTimeInput] = useState(realStartTime);
+  useEffect(() => { setSimTimeInput(config.startTime); }, [config.startTime]);
+  useEffect(() => { setRealTimeInput(realStartTime); }, [realStartTime]);
 
   const cardStyle: React.CSSProperties = {
     background: t.bgCard,
@@ -96,8 +110,9 @@ export function TopBar() {
           style={{
             background: 'transparent',
             border: 'none',
-            color: t.textMuted,
+            color: config.teamName ? '#ffffff' : t.textMuted,
             fontSize: 13,
+            fontWeight: config.teamName ? 700 : 400,
             fontFamily: 'inherit',
             padding: 0,
             outline: 'none',
@@ -123,8 +138,8 @@ export function TopBar() {
         />
       </div>
 
-      {/* Cards row */}
-      <div style={{ display: 'flex', gap: 10, padding: '0 16px 10px', alignItems: 'stretch', flexWrap: 'wrap' }}>
+      {/* Cards row 1 */}
+      <div style={{ display: 'flex', gap: 10, padding: '0 16px 6px', alignItems: 'stretch', flexWrap: 'wrap' }}>
         {/* SIMULATEUR */}
         <div style={{ ...cardStyle, minWidth: 120 }}>
           <span style={labelStyle}>Simulateur</span>
@@ -232,7 +247,17 @@ export function TopBar() {
           )}
         </div>
 
-        {/* DÉPART EN JEU — highlighted card */}
+        {/* ÉQUIPAGE */}
+        <div style={{ ...cardStyle, minWidth: 80, justifyContent: 'center', alignItems: 'center' }}>
+          <span style={labelStyle}>Équipage</span>
+          <span style={{ fontSize: 22, color: t.textPrimary, fontWeight: 700 }}>{driverCount}</span>
+          <span style={{ fontSize: 11, color: t.textMuted }}>pilotes</span>
+        </div>
+      </div>
+
+      {/* Cards row 2 — Horloges */}
+      <div style={{ display: 'flex', gap: 10, padding: '0 16px 10px', alignItems: 'stretch', flexWrap: 'wrap' }}>
+        {/* HEURE RÉEL — controls realStartTime → top timeline */}
         <div
           style={{
             ...cardStyle,
@@ -243,49 +268,156 @@ export function TopBar() {
           }}
         >
           <span style={{ ...labelStyle, color: t.accent, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 11 }}>⏱</span> Départ en jeu (horloge sim)
+            Heure réel
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
             <button
               style={smallBtnStyle}
-              onClick={() => setConfig({ startTime: addMinutesToTime(config.startTime, -15) })}
+              onClick={() => { const v = addMinutesToTime(realStartTime, -1); setRealStartTime(v); setRealTimeInput(v); }}
             >
               −
             </button>
             <input
-              type="time"
-              value={config.startTime}
-              onChange={(e) => setConfig({ startTime: e.target.value })}
+              type="text"
+              value={realTimeInput}
+              onChange={(e) => setRealTimeInput(e.target.value)}
+              onBlur={() => {
+                if (isValidTime(realTimeInput)) {
+                  const [h, m] = realTimeInput.split(':').map(Number);
+                  const v = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                  setRealStartTime(v);
+                  setRealTimeInput(v);
+                } else {
+                  setRealTimeInput(realStartTime);
+                }
+              }}
+              onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+              placeholder="HH:MM"
+              maxLength={5}
               style={{
                 background: 'transparent',
-                border: 'none',
+                border: `1px solid ${t.borderSubtle}`,
+                borderRadius: 4,
                 color: t.accent,
                 fontSize: 20,
                 fontWeight: 700,
-                fontFamily: 'inherit',
-                width: 110,
+                fontFamily: '"Segoe UI Mono", "Consolas", monospace',
+                width: 80,
                 textAlign: 'center',
                 outline: 'none',
-                padding: 0,
+                padding: '2px 4px',
               }}
             />
             <button
               style={smallBtnStyle}
-              onClick={() => setConfig({ startTime: addMinutesToTime(config.startTime, 15) })}
+              onClick={() => { const v = addMinutesToTime(realStartTime, 1); setRealStartTime(v); setRealTimeInput(v); }}
             >
               +
             </button>
           </div>
           <span style={{ fontSize: 9, color: t.night ? '#704530' : '#997a3e', textAlign: 'center', lineHeight: 1.3 }}>
-            place la nuit sur la frise — réglé DANS le jeu, pas l'heure réelle
+            {localTz} — calé sur la frise HEURE RÉEL
           </span>
         </div>
 
-        {/* ÉQUIPAGE */}
-        <div style={{ ...cardStyle, minWidth: 80, justifyContent: 'center', alignItems: 'center' }}>
-          <span style={labelStyle}>Équipage</span>
-          <span style={{ fontSize: 22, color: t.textPrimary, fontWeight: 700 }}>{driverCount}</span>
-          <span style={{ fontSize: 11, color: t.textMuted }}>pilotes</span>
+        {/* DÉPART EN JEU — controls config.startTime → bottom timeline */}
+        <div
+          style={{
+            ...cardStyle,
+            border: `2px solid #58a6ff`,
+            background: t.night ? '#05101a' : '#0d1520',
+            minWidth: 180,
+            alignItems: 'center',
+          }}
+        >
+          <span style={{ ...labelStyle, color: '#58a6ff', display: 'flex', alignItems: 'center', gap: 6 }}>
+            Départ en jeu
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+            <button
+              style={smallBtnStyle}
+              onClick={() => { const v = addMinutesToTime(config.startTime, -1); setConfig({ startTime: v }); setSimTimeInput(v); }}
+            >
+              −
+            </button>
+            <input
+              type="text"
+              value={simTimeInput}
+              onChange={(e) => setSimTimeInput(e.target.value)}
+              onBlur={() => {
+                if (isValidTime(simTimeInput)) {
+                  const [h, m] = simTimeInput.split(':').map(Number);
+                  const v = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                  setConfig({ startTime: v });
+                  setSimTimeInput(v);
+                } else {
+                  setSimTimeInput(config.startTime);
+                }
+              }}
+              onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+              placeholder="HH:MM"
+              maxLength={5}
+              style={{
+                background: 'transparent',
+                border: `1px solid ${t.borderSubtle}`,
+                borderRadius: 4,
+                color: '#58a6ff',
+                fontSize: 20,
+                fontWeight: 700,
+                fontFamily: '"Segoe UI Mono", "Consolas", monospace',
+                width: 80,
+                textAlign: 'center',
+                outline: 'none',
+                padding: '2px 4px',
+              }}
+            />
+            <button
+              style={smallBtnStyle}
+              onClick={() => { const v = addMinutesToTime(config.startTime, 1); setConfig({ startTime: v }); setSimTimeInput(v); }}
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+        {/* SESSIONS PRÉ-COURSE */}
+        <div style={{ ...cardStyle, minWidth: 140 }}>
+          <span style={labelStyle}>Avant-course</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+            <span style={{ fontSize: 10, color: '#2ea043', fontWeight: 600, width: 46 }}>Practice</span>
+            <input
+              type="number"
+              min={0}
+              max={600}
+              value={config.practiceDurationMinutes || 0}
+              onChange={(e) => setConfig({ practiceDurationMinutes: Math.max(0, parseInt(e.target.value) || 0) })}
+              style={{ width: 42, padding: '2px 4px', background: t.bgCard, color: t.textPrimary, border: `1px solid ${t.borderSubtle}`, borderRadius: 4, fontSize: 12, textAlign: 'center' }}
+            />
+            <span style={{ fontSize: 10, color: t.textMuted }}>min</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+            <span style={{ fontSize: 10, color: '#a855f7', fontWeight: 600, width: 46 }}>Qualif</span>
+            <input
+              type="number"
+              min={0}
+              max={600}
+              value={config.qualifyingDurationMinutes || 0}
+              onChange={(e) => setConfig({ qualifyingDurationMinutes: Math.max(0, parseInt(e.target.value) || 0) })}
+              style={{ width: 42, padding: '2px 4px', background: t.bgCard, color: t.textPrimary, border: `1px solid ${t.borderSubtle}`, borderRadius: 4, fontSize: 12, textAlign: 'center' }}
+            />
+            <span style={{ fontSize: 10, color: t.textMuted }}>min</span>
+          </div>
+        </div>
+
+        {/* SETUP UTILISÉ */}
+        <div style={{ ...cardStyle, flex: 1, minWidth: 200 }}>
+          <span style={labelStyle}>Setup utilisé</span>
+          <input
+            value={config.setupNotes}
+            onChange={(e) => setConfig({ setupNotes: e.target.value })}
+            placeholder="Ex: Low DF / Wet setup / Quali trim..."
+            style={inputStyle}
+          />
         </div>
       </div>
     </div>

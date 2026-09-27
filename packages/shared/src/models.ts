@@ -17,6 +17,9 @@ export interface RaceConfig {
   fuelCapacity: number;
   fuelPerLap: number;
   avgLapTimeSeconds: number;
+  practiceDurationMinutes: number;
+  qualifyingDurationMinutes: number;
+  setupNotes: string;
 }
 
 export interface Driver {
@@ -43,7 +46,7 @@ export interface Stint {
 
 export interface PitStop {
   id: string;
-  afterStintId: string;
+  afterStintId?: string;
   time: string;
   durationSeconds: number;
   tireChange: boolean;
@@ -104,6 +107,52 @@ export interface SessionDriver {
   isPlayer: boolean;
 }
 
+export interface IracingSeriesInfo {
+  seriesId: number;
+  seasonId: number;
+  seriesName: string;
+  seasonName: string;
+  maxTeamDrivers: number;
+  driverChanges: boolean;
+  official: boolean;
+  licenseGroup: number;
+  weeks: IracingWeekInfo[];
+}
+
+export interface IracingWeekInfo {
+  weekNum: number;
+  trackName: string;
+  trackConfig: string;
+  trackId: number;
+  raceTimeLimitMinutes: number | null;
+  raceLapLimit: number | null;
+  simStartTime: string | null;
+  timeSlots: IracingTimeSlot[];
+}
+
+export interface IracingTimeSlot {
+  dayOfWeek: number;
+  startTimeUTC: string;
+  repeating: boolean;
+  repeatMinutes: number;
+  sessionMinutes: number;
+}
+
+export interface RivalPitEvent {
+  carIdx: number;
+  carNumber: string;
+  driverName: string;
+  teamName: string;
+  carClass: string;
+  carClassColor: string;
+  lapIn: number;
+  lapOut: number | null;
+  pitInTime: number;
+  pitOutTime: number | null;
+  pitDurationSec: number | null;
+  fuelOnly: boolean | null;
+}
+
 export interface StintDeviation {
   stintId: string;
   plannedStart: string;
@@ -136,7 +185,12 @@ export type ClientMessage =
   | { type: 'iracing-connect' }
   | { type: 'iracing-disconnect' }
   | { type: 'demo-start' }
-  | { type: 'demo-stop' };
+  | { type: 'demo-stop' }
+  | { type: 'iracing-api-login'; cookies: string[] }
+  | { type: 'iracing-api-logout' }
+  | { type: 'iracing-api-status' }
+  | { type: 'iracing-api-seasons' }
+  | { type: 'iracing-api-import'; seasonId: number; weekNum: number };
 
 export type ServerMessage =
   | { type: 'plan-saved'; id: string }
@@ -147,4 +201,7 @@ export type ServerMessage =
   | { type: 'iracing-status'; connected: boolean; error?: string }
   | { type: 'iracing-data'; data: LiveRaceData }
   | { type: 'iracing-drivers'; drivers: SessionDriver[] }
+  | { type: 'iracing-api-auth'; success: boolean; customerName?: string; error?: string }
+  | { type: 'iracing-api-seasons'; series: IracingSeriesInfo[] }
+  | { type: 'iracing-api-import'; config: Partial<RaceConfig> }
   | { type: 'error'; message: string };

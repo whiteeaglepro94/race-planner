@@ -1,8 +1,8 @@
-// packages/client/src/hooks/useWebSocket.ts
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { ClientMessage, ServerMessage } from '@race-planner/shared';
 import { useRaceStore } from '../store/useRaceStore';
 import { useLiveStore } from '../store/useLiveStore';
+import { useCalendarStore } from '../store/useCalendarStore';
 
 export function useWebSocket(url: string) {
   const wsRef = useRef<WebSocket | null>(null);
@@ -52,6 +52,31 @@ export function useWebSocket(url: string) {
             useLiveStore.getState().setConnected(msg.connected);
             if (msg.error) useLiveStore.getState().setError(msg.error);
             break;
+          case 'iracing-api-auth': {
+            const cal = useCalendarStore.getState();
+            cal.setAuthLoading(false);
+            cal.setAuthenticated(msg.success);
+            if (msg.error) cal.setError(msg.error);
+            break;
+          }
+          case 'iracing-api-seasons': {
+            const cal = useCalendarStore.getState();
+            cal.setSeries(msg.series);
+            break;
+          }
+          case 'iracing-api-import': {
+            useRaceStore.getState().setConfig(msg.config);
+            useCalendarStore.getState().setOpen(false);
+            break;
+          }
+          case 'error': {
+            const cal = useCalendarStore.getState();
+            if (cal.loading) {
+              cal.setLoading(false);
+              cal.setError(msg.message);
+            }
+            break;
+          }
         }
       };
     }

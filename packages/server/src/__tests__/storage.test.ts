@@ -16,6 +16,7 @@ describe('File storage', () => {
       sunsetTime: '20:00', sunriseTime: '06:00', mode: 'duration',
       pitStopDurationSeconds: 60, fuelCapacity: 100, fuelPerLap: 3,
       avgLapTimeSeconds: 120,
+      practiceDurationMinutes: 0, qualifyingDurationMinutes: 0, setupNotes: '',
     },
     drivers: [{ id: 'drv-1', name: 'Pilote 1', color: '#FF0000' }],
     stints: [],

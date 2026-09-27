@@ -23,7 +23,7 @@
     "npmRebuild": false,
     "asar": false,
     "directories": {
-      "output": "E:/Jeux/SIMU AUTO/PROJET PLANNING DE COURSE/BUILD 4"
+      "output": "E:/Jeux/SIMU AUTO/PROJET PLANNING DE COURSE/BUILD V1.0"
     },
     "afterPack": "./electron/afterPack.cjs",
     "files": [

@@ -1,6 +1,6 @@
 import type { Viewport } from '../viewport';
 import type { RaceConfig } from '@race-planner/shared';
-import { timeToMinutes } from './background';
+import { timeToMinutes, getNightIntervals } from './background';
 
 export function drawTimeAxis(
   ctx: CanvasRenderingContext2D,
@@ -9,13 +9,15 @@ export function drawTimeAxis(
   y: number
 ): void {
   const startMin = timeToMinutes(config.startTime);
-  let sunsetMin = timeToMinutes(config.sunsetTime);
-  let sunriseMin = timeToMinutes(config.sunriseTime);
-  if (sunsetMin < startMin) sunsetMin += 1440;
-  if (sunriseMin < startMin) sunriseMin += 1440;
-  if (sunriseMin < sunsetMin) sunriseMin += 1440;
-  const sunsetOffset = sunsetMin - startMin;
-  const sunriseOffset = sunriseMin - startMin;
+  const rawSunset = timeToMinutes(config.sunsetTime);
+  const rawSunrise = timeToMinutes(config.sunriseTime);
+  const nights = getNightIntervals(startMin, config.durationMinutes, rawSunset, rawSunrise);
+
+  const sunOffsets: number[] = [];
+  for (const ni of nights) {
+    if (ni.start > 0) sunOffsets.push(ni.start);
+    if (ni.end < config.durationMinutes) sunOffsets.push(ni.end);
+  }
 
   ctx.textAlign = 'center';
 
@@ -31,10 +33,8 @@ export function drawTimeAxis(
     const mm = String(absMin % 60).padStart(2, '0');
 
     const isMajor = m % 120 === 0;
-    const nearSun = Math.abs(m - sunsetOffset) < proximityThreshold
-      || Math.abs(m - sunriseOffset) < proximityThreshold;
+    const nearSun = sunOffsets.some(off => Math.abs(m - off) < proximityThreshold);
 
-    // Tick mark
     ctx.strokeStyle = isMajor ? '#484f58' : '#21262d';
     ctx.lineWidth = isMajor ? 1.5 : 1;
     ctx.beginPath();
@@ -42,7 +42,6 @@ export function drawTimeAxis(
     ctx.lineTo(x, y + (isMajor ? 10 : 6));
     ctx.stroke();
 
-    // Time label — skip if too close to sunset/sunrise marker
     if (!nearSun) {
       const isFinish = m === config.durationMinutes;
       if (isFinish) {
@@ -61,7 +60,6 @@ export function drawTimeAxis(
       }
     }
 
-    // Subtle vertical grid line
     if (isMajor) {
       ctx.strokeStyle = '#ffffff14';
       ctx.lineWidth = 1;
